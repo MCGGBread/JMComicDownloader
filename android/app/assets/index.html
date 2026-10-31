@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0e1014">
+<title>JMComic</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="topbar">
+    <div class="logo">JM</div>
+    <div class="brand">
+        <h1>JMComic</h1>
+        <p>番号 → 下载 → PDF</p>
+    </div>
+    <div class="status" id="statusChip"><span class="dot"></span><span id="statusText">就绪</span></div>
+</header>
+
+<main id="main">
+
+    <!-- ============ 爬取 ============ -->
+    <section class="page active" id="page-crawl">
+        <div class="card">
+            <div class="card-head">
+                <span class="step">① 输入番号</span>
+                <span class="muted">jm / h 前缀 · 括号备注 · 批量</span>
+            </div>
+            <textarea id="input" rows="4" spellcheck="false"
+                placeholder="在这里粘贴番号，例如：&#10;jm54747电梯（极品）&#10;h540931(瞬)-h499835(幼瞬)&#10;47228，118983，152470"></textarea>
+            <div class="chips" id="chips"><span class="hint">尚未识别到番号</span></div>
+            <div class="actions">
+                <button class="btn ghost" id="btnClearInput">清空</button>
+                <button class="btn danger hidden" id="btnStop">停止</button>
+                <button class="btn primary" id="btnStart">开始爬取</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-head">
+                <span class="step">② 任务队列</span>
+                <span class="counter" id="counter">0 / 0</span>
+                <button class="link" id="btnClearTasks">清空列表</button>
+            </div>
+            <div class="bar"><i id="overallBar"></i></div>
+            <div class="task-list" id="taskList"></div>
+        </div>
+
+        <details class="card log" id="logBox">
+            <summary>运行日志<span id="logCount"></span></summary>
+            <pre id="log"></pre>
+        </details>
+    </section>
+
+    <!-- ============ 记录 ============ -->
+    <section class="page" id="page-history">
+        <div class="card">
+            <div class="card-head">
+                <span class="step">爬取记录</span>
+                <span class="muted" id="histCount"></span>
+                <button class="link" id="btnClearHistory">清空</button>
+            </div>
+            <input id="histSearch" class="search" placeholder="搜索番号或标题" spellcheck="false">
+            <div class="hist-list" id="histList"></div>
+        </div>
+    </section>
+
+    <!-- ============ 设置 ============ -->
+    <section class="page" id="page-settings">
+        <div class="card">
+            <div class="card-head"><span class="step">下载</span></div>
+            <div class="field">
+                <label>图片并发</label>
+                <input type="number" id="sThreadsImage" min="1" max="8" inputmode="numeric">
+            </div>
+            <div class="field">
+                <label>重试次数</label>
+                <input type="number" id="sRetries" min="0" max="20" inputmode="numeric">
+            </div>
+            <div class="field">
+                <label>代理</label>
+                <input type="text" id="sProxy" placeholder="host:port，留空直连" spellcheck="false">
+            </div>
+            <div class="field">
+                <label>Cookie AVS</label>
+                <input type="text" id="sCookie" placeholder="敏感题材需要登录时填写" spellcheck="false">
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-head"><span class="step">输出</span></div>
+            <div class="field">
+                <label>PDF 质量</label>
+                <input type="number" id="sPdfQuality" min="50" max="100" inputmode="numeric">
+            </div>
+            <div class="field">
+                <label>PDF 最大宽度</label>
+                <input type="number" id="sPdfMaxWidth" min="0" max="4000" inputmode="numeric">
+            </div>
+            <div class="field">
+                <label>文件命名</label>
+                <input type="text" id="sTemplate" spellcheck="false">
+            </div>
+            <p class="tip">占位符：{id} 番号 · {title} 标题 · {pages} 页数</p>
+
+            <label class="switch"><input type="checkbox" id="sKeepImages"><span>保留下载的原图</span></label>
+            <label class="switch"><input type="checkbox" id="sKeepZip"><span>保留 ZIP 压缩包</span></label>
+            <label class="switch"><input type="checkbox" id="sSkipCrawled"><span>跳过已爬取过的番号</span></label>
+            <label class="switch"><input type="checkbox" id="sAutoResume"><span>启动时自动继续未完成任务</span></label>
+        </div>
+
+        <div class="card">
+            <div class="card-head"><span class="step">存储</span></div>
+            <p class="tip">PDF 保存到系统「下载 / JMComic」目录；临时文件在应用私有目录。</p>
+            <p class="path" id="storagePath"></p>
+        </div>
+
+        <button class="btn primary block" id="btnSaveSettings">保存设置</button>
+    </section>
+
+</main>
+
+<nav class="tabbar">
+    <button class="tab active" data-page="crawl">
+        <svg viewBox="0 0 24 24"><path d="M12 3v11m0 0l-4-4m4 4l4-4M5 19h14"/></svg>
+        <span>爬取</span>
+    </button>
+    <button class="tab" data-page="history">
+        <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+        <span>记录</span>
+    </button>
+    <button class="tab" data-page="settings">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 3v2.2M12 18.8V21M3 12h2.2M18.8 12H21M5.6 5.6l1.6 1.6M16.8 16.8l1.6 1.6M18.4 5.6l-1.6 1.6M7.2 16.8l-1.6 1.6"/></svg>
+        <span>设置</span>
+    </button>
+</nav>
+
+<script src="app.js"></script>
+</body>
+</html>
