@@ -103,6 +103,18 @@ build.bat
 仓库不含签名密钥，首次构建会在 `android/keystore/` 生成新的自签名证书；
 **用新证书签的 APK 无法覆盖安装官方发布的包**，需要先卸载旧版。
 
+## 发布新版本
+
+1. 重新构建 `windows/dist/JMComicClient.exe` 与 `android/dist/JMComicClient.apk`；
+2. 一条命令创建 Release 并上传两个产物：
+
+```bash
+python tools/release.py v1.0.2 "更新说明"
+```
+
+脚本通过 Git Credential Manager 取 token，自动上传并打印下载直链；
+加 `--dry-run` 可先检查产物是否齐全。
+
 ## 常见问题
 
 **下载一直失败 / 超时**
